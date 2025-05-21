@@ -1,0 +1,229 @@
+[21/05, 10:57 pm] Abarna 👻: import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+[21/05, 10:58 pm] Abarna 👻: from google.colab import files
+[21/05, 10:58 pm] Abarna 👻: uploaded = files.upload()
+[21/05, 10:59 pm] Abarna 👻: df = pd.read_csv('air_pollution_data.csv')
+[21/05, 10:59 pm] Abarna 👻: df.head()
+[21/05, 10:59 pm] Abarna 👻: df.drop_duplicates(inplace=True)
+
+# Identify numeric and non-numeric columns
+numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+non_numeric_cols = df.select_dtypes(exclude=['int64', 'float64']).columns
+
+# Impute missing numeric values with median
+imputer = SimpleImputer(strategy='median')
+df_numeric_imputed = pd.DataFrame(imputer.fit_transform(df[numeric_cols]), columns=numeric_cols)
+
+# Combine with non-numeric columns
+df_final = pd.concat([df[non_numeric_cols].reset_index(drop=True), df_numeric_imputed], axis=1)
+[21/05, 11:00 pm] Abarna 👻: df.describe()
+[21/05, 11:00 pm] Abarna 👻: sns.histplot(df['aqi'], bins=30, kde=True)
+plt.title('Air Quality Index Distribution')
+plt.show()
+[21/05, 11:01 pm] Abarna 👻: # Calculate correlation matrix
+correlation_matrix = df.select_dtypes(include=np.number).corr()  # Select only numeric columns for correlation
+
+# Display the correlation matrix
+print(" Correlation Matrix:")
+print(correlation_matrix)
+
+# Visualize the correlation matrix as a heatmap
+plt.figure(figsize=(12, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Correlation Matrix of Features')
+plt.show()
+[21/05, 11:02 pm] Abarna 👻: import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.impute import SimpleImputer
+
+if 'Date' in df.columns:
+    df['Date'] = pd.to_datetime(df['Date'])
+    df['Year'] = df['Date'].dt.year
+    df['Month'] = df['Date'].dt.month
+    df['Day'] = df['Date'].dt.day
+    df.drop(columns='Date', inplace=True)
+
+numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
+non_numeric_cols = df.select_dtypes(exclude=['int64', 'float64']).columns
+
+imputer = SimpleImputer(strategy='median')
+df_numeric_imputed = pd.DataFrame(imputer.fit_transform(df[numeric_cols]), columns=numeric_cols)
+
+df_final = pd.concat([df[non_numeric_cols].reset_index(drop=True), df_numeric_imputed], axis=1)
+
+df_encoded = pd.get_dummies(df_final, drop_first=True)
+X = df_encoded.drop('aqi', axis=1)
+y = df_encoded['aqi']
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Feature scaling
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Train model
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train_scaled, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test_scaled)
+
+# Plot: Histogram of predicted AQI
+plt.figure(figsize=(14, 6))
+
+plt.subplot(1, 2, 1)
+sns.histplot(y_pred, bins=30, kde=True, color='skyblue')
+plt.title("Histogram of Predicted AQI")
+plt.xlabel("Predicted AQI")
+plt.ylabel("Frequency")
+[21/05, 11:02 pm] Abarna 👻: from sklearn.ensemble import RandomForestRegressor
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+
+mae = mean_absolute_error(y_test, y_pred)
+
+# RMSE (Root Mean Squared Error)
+mse = mean_squared_error(y_test, y_pred)  # Calculate Mean Squared Error
+rmse = np.sqrt(mse)  # Take the square root to get RMSE
+
+# R² Score
+r2 = r2_score(y_test, y_pred)
+
+# Print the evaluation metrics
+print(" Model Evaluation on Test Set:")
+print("Mean Absolute Error (MAE):", round(mae, 2))
+print("Root Mean Squared Error (RMSE):", round(rmse, 2))
+print("R² Score:", round(r2, 4))
+
+# --------------------------
+# Plotting Results
+# --------------------------
+
+# Plot: Histogram of predicted AQI
+plt.figure(figsize=(14, 6))
+
+# Histogram
+plt.subplot(1, 2, 1)
+sns.histplot(y_pred, bins=30, kde=True, color='skyblue')
+plt.title("Histogram of Predicted AQI")
+plt.xlabel("Predicted AQI")
+plt.ylabel("Frequency")
+
+# Boxplot (Actual vs Predicted AQI)
+plt.subplot(1, 2, 2)
+df_compare = pd.DataFrame({'Actual AQI': y_test, 'Predicted AQI': y_pred})
+df_melted = df_compare.melt(var_name='Type', value_name='AQI')
+sns.boxplot(x='Type', y='AQI', data=df_melted, palette='pastel')
+plt.title("Boxplot: Actual vs Predicted AQI")
+
+# Show plots
+plt.tight_layout()
+plt.show()
+[21/05, 11:03 pm] Abarna 👻: from sklearn.metrics import accuracy_score, classification_report
+
+# Define AQI categories based on standard AQI breakpoints
+def categorize_aqi(aqi):
+    if aqi == 5:
+        return "Good"
+    elif aqi == 4:
+        return "Moderate"
+    elif aqi == 3:
+        return "Unhealthy for Sensitive"
+    elif aqi == 2:
+        return "Unhealthy"
+    elif aqi == 1:
+        return "Very Unhealthy"
+    else:
+        return "Hazardous"
+
+# Convert actual and predicted AQI values into categories
+y_test_cat = y_test.apply(categorize_aqi)
+y_pred_cat = pd.Series(y_pred).apply(categorize_aqi)
+
+# Accuracy
+accuracy = accuracy_score(y_test_cat, y_pred_cat)
+print(f"Accuracy: {accuracy:.4f}")
+
+# Classification Report (includes macro avg and weighted avg)
+report = classification_report(y_test_cat, y_pred_cat, digits=4)
+print("Classification Report:\n")
+print(report)
+[21/05, 11:03 pm] Abarna 👻: pip install gradio
+[21/05, 11:04 pm] Abarna 👻: from math import floor
+import gradio as gr
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+import io
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+# Dummy predict function (replace with your model)
+def predict_aqi_ui(CO, NO, NO2, PM25, PM10, SO2, O3, NH3):
+    # Input features as an array
+    features = np.array([CO, NO, NO2, PM25, PM10, SO2, O3, NH3])
+
+    # Dummy prediction (replace with model.predict(features.reshape(1, -1)) etc.)
+    predicted_aqi = float(50 + 2 * CO + 1.5 * NO2 + 0.8 * PM25 + 0.5 * O3)
+
+    # Ensure predicted AQI is between 1 and 5
+    predicted_aqi = max(1, min(predicted_aqi, 5))
+
+    # Dummy true values (for visualization and metric examples)
+    true_values = np.random.normal(predicted_aqi, 10, size=50)
+    predictions = true_values + np.random.normal(0, 5, size=50)
+
+    # Evaluation metrics
+    mae = mean_absolute_error(true_values, predictions)
+    rmse = np.sqrt(mean_squared_error(true_values, predictions))
+    r2 = r2_score(true_values, predictions)
+
+
+    return (
+        round(predicted_aqi, 2),
+        f"{mae:.2f}",
+        f"{rmse:.2f}",
+        f"{r2:.2f}"
+
+    )
+
+# Gradio interface
+interface = gr.Interface(
+    fn=predict_aqi_ui,
+    inputs=[
+        gr.Slider(0.1, 10.0, value=1.0, label="CO"),
+        gr.Slider(0.1, 100.0, value=10.0, label="NO"),
+        gr.Slider(0.1, 200.0, value=20.0, label="NO₂"),
+        gr.Slider(0.1, 500.0, value=40.0, label="PM2.5"),
+        gr.Slider(0.1, 500.0, value=60.0, label="PM10"),
+        gr.Slider(0.1, 100.0, value=10.0, label="SO₂"),
+        gr.Slider(0.1, 150.0, value=20.0, label="O₃"),
+        gr.Slider(0.1, 100.0, value=10.0, label="NH₃"),
+    ],
+    outputs=[
+        gr.Textbox(label="Predicted AQI"),
+        gr.Textbox(label="Mean Absolute Error (MAE)"),
+        gr.Textbox(label="Root Mean Squared Error (RMSE)"),
+        gr.Textbox(label="R² Score"),
+
+    ],
+    title="🌫️ AQI Prediction and Evaluation",
+    description="Enter pollutant levels to predict AQI and evaluate model performance (MAE, RMSE, R²) with visualizations."
+)
+
+# Launch the interface
+interface.launch()
